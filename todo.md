@@ -35,3 +35,4 @@
 - [x] Fix pnpm lockfile configuration mismatch in GitHub Actions
 - [x] Redesign translation UI with separate language buttons
 - [x] Add reverse direction button for translation
+- [x] Simplify form to accept pasted text with edit preview

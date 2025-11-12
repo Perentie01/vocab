@@ -24,6 +24,7 @@
 - [ ] Test deployment pipeline
 
 ## Polish & Testing
+- [x] Fix IndexedDB connection closing error
 - [ ] Test IndexedDB operations
 - [ ] Test text-to-speech across browsers
 - [ ] Test PWA installation

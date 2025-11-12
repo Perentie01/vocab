@@ -30,3 +30,8 @@
 - [ ] Test PWA installation
 - [ ] Cross-browser compatibility check
 - [ ] Performance optimization
+
+## Bug Fixes
+- [x] Fix pnpm lockfile configuration mismatch in GitHub Actions
+- [x] Redesign translation UI with separate language buttons
+- [x] Add reverse direction button for translation

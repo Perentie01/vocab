@@ -1,5 +1,6 @@
 /**
  * IndexedDB storage layer for vocabulary entries
+ * Implements proper connection management to prevent "database connection is closing" errors
  */
 
 export interface VocabularyEntry {
@@ -16,19 +17,30 @@ const DB_NAME = 'VocabDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'vocabulary';
 
-let db: IDBDatabase | null = null;
+let dbPromise: Promise<IDBDatabase> | null = null;
 
-export async function initDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+function openDB(): Promise<IDBDatabase> {
+  if (dbPromise) {
+    return dbPromise;
+  }
+
+  dbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
+      dbPromise = null; // Reset promise on error
       reject(new Error('Failed to open IndexedDB'));
     };
 
     request.onsuccess = () => {
-      db = request.result;
-      resolve(db);
+      const database = request.result;
+      
+      // Reset connection on close to allow reconnection
+      database.onclose = () => {
+        dbPromise = null;
+      };
+      
+      resolve(database);
     };
 
     request.onupgradeneeded = (event) => {
@@ -41,17 +53,46 @@ export async function initDB(): Promise<IDBDatabase> {
       }
     };
   });
+
+  return dbPromise;
 }
 
-function getDB(): IDBDatabase {
-  if (!db) {
-    throw new Error('Database not initialized. Call initDB() first.');
-  }
-  return db;
+export async function initDB(): Promise<void> {
+  await openDB();
 }
 
-export async function addEntry(entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<VocabularyEntry> {
-  const database = getDB();
+function executeTransaction<T>(
+  callback: (store: IDBObjectStore) => IDBRequest<T>,
+  mode: 'readonly' | 'readwrite' = 'readonly'
+): Promise<T> {
+  return openDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = db.transaction([STORE_NAME], mode);
+        const store = transaction.objectStore(STORE_NAME);
+        const request = callback(store);
+
+        request.onerror = () => {
+          reject(new Error('Transaction failed'));
+        };
+
+        request.onsuccess = () => {
+          resolve(request.result);
+        };
+
+        transaction.onerror = () => {
+          reject(new Error('Transaction error'));
+        };
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
+
+export async function addEntry(
+  entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<VocabularyEntry> {
   const now = Date.now();
   const newEntry: VocabularyEntry = {
     ...entry,
@@ -60,25 +101,20 @@ export async function addEntry(entry: Omit<VocabularyEntry, 'id' | 'createdAt' |
     updatedAt: now,
   };
 
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.add(newEntry);
+  await executeTransaction(
+    (store) => store.add(newEntry),
+    'readwrite'
+  );
 
-    request.onerror = () => {
-      reject(new Error('Failed to add entry'));
-    };
-
-    request.onsuccess = () => {
-      resolve(newEntry);
-    };
-  });
+  return newEntry;
 }
 
-export async function updateEntry(id: string, updates: Partial<Omit<VocabularyEntry, 'id' | 'createdAt'>>): Promise<VocabularyEntry> {
-  const database = getDB();
+export async function updateEntry(
+  id: string,
+  updates: Partial<Omit<VocabularyEntry, 'id' | 'createdAt'>>
+): Promise<VocabularyEntry> {
   const entry = await getEntry(id);
-  
+
   if (!entry) {
     throw new Error('Entry not found');
   }
@@ -89,102 +125,48 @@ export async function updateEntry(id: string, updates: Partial<Omit<VocabularyEn
     updatedAt: Date.now(),
   };
 
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(updatedEntry);
+  await executeTransaction(
+    (store) => store.put(updatedEntry),
+    'readwrite'
+  );
 
-    request.onerror = () => {
-      reject(new Error('Failed to update entry'));
-    };
-
-    request.onsuccess = () => {
-      resolve(updatedEntry);
-    };
-  });
+  return updatedEntry;
 }
 
 export async function deleteEntry(id: string): Promise<void> {
-  const database = getDB();
-  
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(id);
-
-    request.onerror = () => {
-      reject(new Error('Failed to delete entry'));
-    };
-
-    request.onsuccess = () => {
-      resolve();
-    };
-  });
+  await executeTransaction(
+    (store) => store.delete(id),
+    'readwrite'
+  );
 }
 
 export async function getEntry(id: string): Promise<VocabularyEntry | null> {
-  const database = getDB();
-  
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction([STORE_NAME], 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(id);
-
-    request.onerror = () => {
-      reject(new Error('Failed to get entry'));
-    };
-
-    request.onsuccess = () => {
-      resolve(request.result || null);
-    };
-  });
+  const result = await executeTransaction((store) => store.get(id));
+  return result || null;
 }
 
 export async function getAllEntries(): Promise<VocabularyEntry[]> {
-  const database = getDB();
-  
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction([STORE_NAME], 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.getAll();
-
-    request.onerror = () => {
-      reject(new Error('Failed to get all entries'));
-    };
-
-    request.onsuccess = () => {
-      const entries = request.result as VocabularyEntry[];
-      resolve(entries.sort((a, b) => b.createdAt - a.createdAt));
-    };
-  });
+  const results = await executeTransaction((store) => store.getAll());
+  const entries = (results as VocabularyEntry[]) || [];
+  return entries.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function getEntriesByLanguage(language: 'en' | 'zh'): Promise<VocabularyEntry[]> {
-  const database = getDB();
-  
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction([STORE_NAME], 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
+  const results = await executeTransaction((store) => {
     const index = store.index('language');
-    const request = index.getAll(language);
-
-    request.onerror = () => {
-      reject(new Error('Failed to get entries by language'));
-    };
-
-    request.onsuccess = () => {
-      const entries = request.result as VocabularyEntry[];
-      resolve(entries.sort((a, b) => b.createdAt - a.createdAt));
-    };
+    return index.getAll(language);
   });
+  const entries = (results as VocabularyEntry[]) || [];
+  return entries.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function searchEntries(query: string): Promise<VocabularyEntry[]> {
   const allEntries = await getAllEntries();
   const lowerQuery = query.toLowerCase();
-  
-  return allEntries.filter(entry =>
-    entry.word.toLowerCase().includes(lowerQuery) ||
-    entry.translation.toLowerCase().includes(lowerQuery)
+
+  return allEntries.filter(
+    (entry) =>
+      entry.word.toLowerCase().includes(lowerQuery) ||
+      entry.translation.toLowerCase().includes(lowerQuery)
   );
 }

@@ -36,3 +36,9 @@
 - [x] Redesign translation UI with separate language buttons
 - [x] Add reverse direction button for translation
 - [x] Simplify form to accept pasted text with edit preview
+
+## Theming & Branding
+- [x] Update app title to "Vox"
+- [x] Create rusty red color theme with complementary colors
+- [x] Generate Vox logo and app icons
+- [x] Apply theme to UI components

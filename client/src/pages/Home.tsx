@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { APP_TITLE } from '@/const';
+import { APP_TITLE, APP_LOGO } from '@/const';
 import { useVocabulary } from '@/hooks/useVocabulary';
 import { speakSequence, stopSpeech } from '@/lib/tts';
 import { VocabularyEntry } from '@/lib/db';
@@ -60,10 +60,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-2xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">{APP_TITLE}</h1>
-          <p className="text-muted-foreground">Learn vocabulary with pronunciation guides</p>
+      <div className="container max-w-2xl mx-auto px-4 py-6">
+        <div className="mb-8 flex items-center gap-4">
+          <img src={APP_LOGO} alt="Vox" className="w-16 h-16" />
+          <div>
+            <h1 className="text-4xl font-bold mb-1" style={{ color: 'oklch(0.55 0.2 25)' }}>Vox</h1>
+            <p className="text-muted-foreground">Learn vocabulary with pronunciation guides</p>
+          </div>
         </div>
 
         {error && (

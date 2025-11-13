@@ -44,33 +44,25 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-teal-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      {/* Header with Logo */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-orange-100 dark:border-slate-700 elevation-2">
-        <div className="container py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="Vox" className="w-12 h-12" />
-              <div>
-                <h1 className="text-3xl font-bold" style={{ color: 'oklch(0.55 0.2 25)' }}>Vox</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Learn vocabulary with pronunciation guides</p>
-              </div>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? (
-                <Moon className="w-5 h-5 text-gray-700" />
-              ) : (
-                <Sun className="w-5 h-5 text-yellow-400" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div className="container max-w-2xl mx-auto px-4 py-8 space-y-8">
+        {/* Header with Logo */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="Vox" className="w-12 h-12" />
+            <h1 className="text-3xl font-bold" style={{ color: 'oklch(0.55 0.2 25)' }}>Vox</h1>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? (
+              <Moon className="w-5 h-5 text-gray-700" />
+            ) : (
+              <Sun className="w-5 h-5 text-yellow-400" />
+            )}
+          </button>
+        </div>
         {/* Error message */}
         {error && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg elevation-1">
@@ -101,36 +93,21 @@ export default function Home() {
         )}
 
         {/* Add New Word Section */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Add New Word</h2>
-          <VocabularyForm onSubmit={handleAddEntry} isLoading={isAdding} />
-        </div>
+        <VocabularyForm onSubmit={handleAddEntry} isLoading={isAdding} />
 
         {/* Stats and Navigation */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-6 elevation-2 text-center hover:elevation-3 transition-all dark:bg-slate-800 dark:border-slate-700">
             <p className="text-3xl font-bold text-orange-600">{entries.length}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Words Learned</p>
           </Card>
           <Card
             className="p-6 elevation-2 text-center hover:elevation-3 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700"
             onClick={() => setLocation('/vocabulary')}
           >
             <p className="text-3xl font-bold text-teal-600">→</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">View All</p>
           </Card>
         </div>
 
-        {/* Call to Action */}
-        {entries.length > 0 && (
-          <Button
-            onClick={() => setLocation('/vocabulary')}
-            className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold elevation-2"
-          >
-            View Your Vocabulary
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        )}
       </div>
     </div>
   );

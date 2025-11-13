@@ -3,20 +3,57 @@
  * Implements proper connection management to prevent "database connection is closing" errors
  */
 
-export interface VocabularyEntry {
+type Timestamped<T> = T & {
+  createdAt: number;
+  updatedAt: number;
+};
+
+type WithIdentifier<T> = T & {
   id: string;
+};
+
+export type VocabularyEntryAttributes = {
   english: string;
   chinese: string;
   pinyin?: string;
-  createdAt: number;
-  updatedAt: number;
-}
+  tags?: string[];
+};
+
+export type VocabularyEntry = WithIdentifier<Timestamped<VocabularyEntryAttributes>>;
+export type VocabularyEntryDraft = VocabularyEntryAttributes;
+export type VocabularyEntryUpdate = Partial<VocabularyEntryAttributes>;
+
+export type VocabularyEntryMutation<T extends 'create' | 'update'> = T extends 'create'
+  ? VocabularyEntryDraft
+  : VocabularyEntryUpdate;
 
 const DB_NAME = 'VocabDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'vocabulary';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
+
+function generateEntryId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+function createEntryRecord(
+  attributes: VocabularyEntryDraft,
+  timestamp: number = Date.now()
+): VocabularyEntry {
+  const normalizedTags = attributes.tags?.map(tag => tag.trim()).filter(Boolean);
+
+  return {
+    ...attributes,
+    ...(normalizedTags ? { tags: normalizedTags } : {}),
+    id: generateEntryId(),
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  } satisfies VocabularyEntry;
+}
 
 function openDB(): Promise<IDBDatabase> {
   if (dbPromise) {
@@ -89,16 +126,8 @@ function executeTransaction<T>(
   });
 }
 
-export async function addEntry(
-  entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>
-): Promise<VocabularyEntry> {
-  const now = Date.now();
-  const newEntry: VocabularyEntry = {
-    ...entry,
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    createdAt: now,
-    updatedAt: now,
-  };
+export async function addEntry(entry: VocabularyEntryDraft): Promise<VocabularyEntry> {
+  const newEntry = createEntryRecord(entry);
 
   await executeTransaction(
     (store) => store.add(newEntry),
@@ -108,9 +137,31 @@ export async function addEntry(
   return newEntry;
 }
 
+export async function addEntries(entries: VocabularyEntryDraft[]): Promise<VocabularyEntry[]> {
+  if (!entries.length) {
+    return [];
+  }
+
+  const database = await openDB();
+  const prepared = entries.map((entry, index) =>
+    createEntryRecord(entry, Date.now() + index)
+  );
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+
+    prepared.forEach(entry => store.add(entry));
+
+    transaction.oncomplete = () => resolve(prepared);
+    transaction.onerror = () => reject(new Error('Bulk insert transaction failed'));
+    transaction.onabort = () => reject(new Error('Bulk insert transaction aborted'));
+  });
+}
+
 export async function updateEntry(
   id: string,
-  updates: Partial<Omit<VocabularyEntry, 'id' | 'createdAt'>>
+  updates: VocabularyEntryUpdate
 ): Promise<VocabularyEntry> {
   const entry = await getEntry(id);
 

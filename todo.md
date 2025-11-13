@@ -48,3 +48,12 @@
 - [x] Update header with Vox branding
 - [x] Streamline form for frictionless entry
 - [x] Update accent colors throughout UI
+
+## Design & UX Enhancements
+- [ ] Remove unnecessary auth files (const.ts)
+- [ ] Enhance visual design with elevation and banners
+- [ ] Implement undo toast for word deletion
+- [ ] Create dedicated vocabulary page
+- [ ] Add pinyin/hanzi display for Chinese words
+- [ ] Implement word of the day feature
+- [ ] Add interactive feedback and animations

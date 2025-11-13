@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { APP_LOGO, APP_TITLE } from "@/const";
+// Auth not needed for this app
 import {
   Dialog,
   DialogContent,
@@ -20,8 +20,8 @@ interface ManusDialogProps {
 }
 
 export function ManusDialog({
-  title = APP_TITLE,
-  logo = APP_LOGO,
+  title = "Vox",
+  logo = "/logo.png",
   open = false,
   onLogin,
   onOpenChange,

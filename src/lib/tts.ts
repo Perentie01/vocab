@@ -63,3 +63,10 @@ export function getVoiceForLanguage(language: string): SpeechSynthesisVoice | un
   const voices = getAvailableVoices();
   return voices.find(voice => voice.lang.startsWith(language));
 }
+
+export function speakText(text: string, lang: 'en' | 'zh'): void {
+  const languageCode = lang === 'en' ? 'en-US' : 'zh-CN';
+  speak(text, { language: languageCode }).catch(err => {
+    console.error('Speech synthesis error:', err);
+  });
+}

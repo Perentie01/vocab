@@ -70,6 +70,31 @@ export function useVocabulary() {
     []
   );
 
+  const deleteEntry_ = useCallback(
+    async (id: string) => {
+      await remove(id);
+    },
+    [remove]
+  );
+
+  const restoreEntry = useCallback(
+    async (entry: VocabularyEntry) => {
+      try {
+        const newEntry = await addEntry({
+          english: entry.english,
+          chinese: entry.chinese,
+          pinyin: entry.pinyin,
+        });
+        setEntries(prev => [newEntry, ...prev]);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to restore entry';
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
   const search = useCallback(
     async (query: string) => {
       if (!query.trim()) {
@@ -94,6 +119,8 @@ export function useVocabulary() {
     add,
     update,
     remove,
+    deleteEntry: deleteEntry_,
+    restoreEntry,
     search,
   };
 }

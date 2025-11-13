@@ -5,12 +5,11 @@
 
 export interface VocabularyEntry {
   id: string;
-  word: string;
-  language: 'en' | 'zh';
-  translation: string;
+  english: string;
+  chinese: string;
+  pinyin?: string;
   createdAt: number;
   updatedAt: number;
-  audioUrl?: string;
 }
 
 const DB_NAME = 'VocabDB';
@@ -166,7 +165,7 @@ export async function searchEntries(query: string): Promise<VocabularyEntry[]> {
 
   return allEntries.filter(
     (entry) =>
-      entry.word.toLowerCase().includes(lowerQuery) ||
-      entry.translation.toLowerCase().includes(lowerQuery)
+      entry.english.toLowerCase().includes(lowerQuery) ||
+      entry.chinese.toLowerCase().includes(lowerQuery)
   );
 }

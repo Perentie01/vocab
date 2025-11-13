@@ -42,9 +42,8 @@ export default function VocabularyForm({ onSubmit, isLoading = false }: Vocabula
 
     try {
       await onSubmit({
-        word: english.trim(),
-        translation: chinese.trim(),
-        language: 'en',
+        english: english.trim(),
+        chinese: chinese.trim(),
       });
       setEnglish('');
       setChinese('');

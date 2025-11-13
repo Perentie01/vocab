@@ -146,6 +146,23 @@
 }
 
 @layer components {
+  /* Elevation utilities for depth and hierarchy */
+  .elevation-1 {
+    @apply shadow-sm;
+  }
+  
+  .elevation-2 {
+    @apply shadow-md;
+  }
+  
+  .elevation-3 {
+    @apply shadow-lg;
+  }
+  
+  .elevation-4 {
+    @apply shadow-xl;
+  }
+
   /**
    * Custom container utility that centers content and adds responsive padding.
    *

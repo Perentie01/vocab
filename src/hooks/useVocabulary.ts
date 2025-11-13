@@ -84,6 +84,7 @@ export function useVocabulary() {
           english: entry.english,
           chinese: entry.chinese,
           pinyin: entry.pinyin,
+          tags: entry.tags,
         });
         setEntries(prev => [newEntry, ...prev]);
       } catch (err) {

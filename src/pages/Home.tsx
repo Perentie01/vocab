@@ -5,6 +5,7 @@ import { useVocabulary } from '@/hooks/useVocabulary';
 import { speakText } from '@/lib/tts';
 import { VocabularyEntry } from '@/lib/db';
 import VocabularyForm from '@/components/VocabularyForm';
+import VocabularyUpload from '@/components/VocabularyUpload';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -12,6 +13,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const { entries, loading, error, add } = useVocabulary();
   const [isAdding, setIsAdding] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Select a random word of the day
   const wordOfTheDay = useMemo(() => {
@@ -26,6 +28,17 @@ export default function Home() {
       await add(entry);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleUploadEntries = async (batch: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>[]) => {
+    setIsUploading(true);
+    try {
+      for (const entry of batch) {
+        await add(entry);
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -89,6 +102,10 @@ export default function Home() {
         <div className="space-y-4">
           <h2 className="text-2xl font-bold text-gray-900">Add New Word</h2>
           <VocabularyForm onSubmit={handleAddEntry} isLoading={isAdding} />
+          <VocabularyUpload onUpload={handleUploadEntries} />
+          {isUploading && (
+            <p className="text-sm text-gray-500">Processing uploaded entries...</p>
+          )}
         </div>
 
         {/* Stats and Navigation */}

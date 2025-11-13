@@ -113,6 +113,18 @@ export default function Vocabulary() {
                       {entry.pinyin && (
                         <p className="text-sm text-gray-600">{entry.pinyin}</p>
                       )}
+                      {entry.tags && entry.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {entry.tags.map((tag) => (
+                            <span
+                              key={`${entry.id}-${tag}`}
+                              className="px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-700"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">

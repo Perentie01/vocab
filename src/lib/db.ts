@@ -8,6 +8,7 @@ export interface VocabularyEntry {
   english: string;
   chinese: string;
   pinyin?: string;
+  tags?: string[];
   createdAt: number;
   updatedAt: number;
 }

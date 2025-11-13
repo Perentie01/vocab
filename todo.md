@@ -50,10 +50,15 @@
 - [x] Update accent colors throughout UI
 
 ## Design & UX Enhancements
-- [ ] Remove unnecessary auth files (const.ts)
-- [ ] Enhance visual design with elevation and banners
-- [ ] Implement undo toast for word deletion
-- [ ] Create dedicated vocabulary page
-- [ ] Add pinyin/hanzi display for Chinese words
-- [ ] Implement word of the day feature
-- [ ] Add interactive feedback and animations
+- [x] Remove unnecessary auth files (const.ts)
+- [x] Enhance visual design with elevation and banners
+- [x] Implement undo toast for word deletion
+- [x] Create dedicated vocabulary page
+- [x] Add pinyin/hanzi display for Chinese words
+- [x] Implement word of the day feature
+- [x] Add interactive feedback and animations
+
+## PWA & App Configuration
+- [x] Generate PWA icons (192x192, 512x512, maskable)
+- [x] Set Vite app title to Vox
+- [x] Implement dark mode with theme toggle

@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useVocabulary } from "@/hooks/useVocabulary";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, Volume2 } from "lucide-react";
+import { ArrowLeft, Trash2, Volume2, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { speakText } from "@/lib/tts";
 
 export default function Vocabulary() {
@@ -13,6 +14,7 @@ export default function Vocabulary() {
   const { entries, deleteEntry, restoreEntry } = useVocabulary();
   const [searchTerm, setSearchTerm] = useState("");
   const [deletedEntry, setDeletedEntry] = useState<any>(null);
+  const { theme, toggleTheme } = useTheme();
 
   const filteredEntries = entries.filter(
     (entry) =>
@@ -43,24 +45,35 @@ export default function Vocabulary() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Header with back button */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-orange-100 elevation-2">
+      <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-orange-100 dark:border-slate-700 elevation-2">
         <div className="container py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setLocation("/")}
-              className="hover:bg-orange-100"
+              className="hover:bg-orange-100 dark:hover:bg-slate-800"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Your Vocabulary</h1>
-              <p className="text-sm text-gray-500">{entries.length} words learned</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Your Vocabulary</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{entries.length} words learned</p>
             </div>
           </div>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? (
+              <Moon className="w-5 h-5 text-gray-700" />
+            ) : (
+              <Sun className="w-5 h-5 text-yellow-400" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -77,8 +90,8 @@ export default function Vocabulary() {
       {/* Vocabulary List */}
       <div className="container pb-12">
         {filteredEntries.length === 0 ? (
-          <Card className="p-8 text-center elevation-1">
-            <p className="text-gray-500">
+          <Card className="p-8 text-center elevation-1 dark:bg-slate-800 dark:border-slate-700">
+            <p className="text-gray-500 dark:text-gray-400">
               {entries.length === 0
                 ? "No words yet. Add your first word on the home page!"
                 : "No matching words found."}
@@ -89,29 +102,29 @@ export default function Vocabulary() {
             {filteredEntries.map((entry) => (
               <Card
                 key={entry.id}
-                className="p-6 elevation-2 hover:elevation-3 transition-all hover:shadow-lg"
+                className="p-6 elevation-2 hover:elevation-3 transition-all hover:shadow-lg dark:bg-slate-800 dark:border-slate-700"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                         {entry.english}
                       </h3>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleSpeak(entry.english, "en")}
-                        className="hover:bg-orange-100"
+                        className="hover:bg-orange-100 dark:hover:bg-slate-700"
                       >
                         <Volume2 className="w-4 h-4" />
                       </Button>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-lg font-semibold text-orange-600">
+                      <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
                         {entry.chinese}
                       </p>
                       {entry.pinyin && (
-                        <p className="text-sm text-gray-600">{entry.pinyin}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{entry.pinyin}</p>
                       )}
                     </div>
                   </div>
@@ -120,7 +133,7 @@ export default function Vocabulary() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleSpeak(entry.chinese, "zh")}
-                      className="hover:bg-orange-100"
+                      className="hover:bg-orange-100 dark:hover:bg-slate-700"
                     >
                       <Volume2 className="w-4 h-4" />
                     </Button>
@@ -128,7 +141,7 @@ export default function Vocabulary() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(entry)}
-                      className="hover:bg-red-100 hover:text-red-600"
+                      className="hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

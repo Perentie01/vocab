@@ -62,9 +62,3 @@
 - [x] Generate PWA icons (192x192, 512x512, maskable)
 - [x] Set Vite app title to Vox
 - [x] Implement dark mode with theme toggle
-
-## Bug Fixes & UX Improvements
-- [x] Fix GitHub Pages 404 routing issue
-- [x] Make top bar part of main content (non-floating)
-- [x] Simplify UI with icons instead of verbose text
-- [x] Remove unnecessary labels and descriptions

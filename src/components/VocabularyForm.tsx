@@ -80,33 +80,29 @@ export default function VocabularyForm({ onSubmit, isLoading = false }: Vocabula
     <Card className="border-0 shadow-sm">
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-1">
-            <Input
-              ref={englishInputRef}
-              id="english"
-              placeholder="English"
-              value={english}
-              onChange={(e) => setEnglish(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isLoading}
-              className="text-base"
-              autoComplete="off"
-            />
-          </div>
+          <Input
+            ref={englishInputRef}
+            id="english"
+            placeholder="English"
+            value={english}
+            onChange={(e) => setEnglish(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            className="text-base"
+            autoComplete="off"
+          />
 
-          <div className="space-y-1">
-            <Input
-              ref={chineseInputRef}
-              id="chinese"
-              placeholder="中文"
-              value={chinese}
-              onChange={(e) => setChinese(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isLoading}
-              className="text-base"
-              autoComplete="off"
-            />
-          </div>
+          <Input
+            ref={chineseInputRef}
+            id="chinese"
+            placeholder="中文"
+            value={chinese}
+            onChange={(e) => setChinese(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            className="text-base"
+            autoComplete="off"
+          />
 
           {error && (
             <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md">

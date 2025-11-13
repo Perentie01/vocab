@@ -1,14 +1,61 @@
-import { useState, useRef } from 'react';
+import { useReducer, useRef } from 'react';
 import { Upload, FileText } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { VocabularyEntry } from '@/lib/db';
+import { VocabularyEntryMutation } from '@/lib/db';
 import { toast } from 'sonner';
 
 const EXPECTED_HEADERS = ['chinese', 'pinyin', 'english', 'tags'] as const;
 
-type UploadableEntry = Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>;
+type UploadableEntry = VocabularyEntryMutation<'create'>;
+
+type UploadState = {
+  status: 'idle' | 'processing' | 'success' | 'error';
+  message: string | null;
+  lastFileName: string | null;
+  processedCount: number;
+};
+
+type UploadAction =
+  | { type: 'START'; fileName: string }
+  | { type: 'SUCCESS'; fileName: string; count: number }
+  | { type: 'ERROR'; fileName: string; message: string };
+
+const initialState: UploadState = {
+  status: 'idle',
+  message: null,
+  lastFileName: null,
+  processedCount: 0,
+};
+
+function uploadReducer(state: UploadState, action: UploadAction): UploadState {
+  switch (action.type) {
+    case 'START':
+      return {
+        status: 'processing',
+        message: null,
+        lastFileName: action.fileName,
+        processedCount: 0,
+      };
+    case 'SUCCESS':
+      return {
+        status: 'success',
+        message: `Imported ${action.count} entr${action.count === 1 ? 'y' : 'ies'} from "${action.fileName}".`,
+        lastFileName: action.fileName,
+        processedCount: action.count,
+      };
+    case 'ERROR':
+      return {
+        status: 'error',
+        message: action.message,
+        lastFileName: action.fileName,
+        processedCount: 0,
+      };
+    default:
+      return state;
+  }
+}
 
 function parseTsvFile(contents: string): UploadableEntry[] {
   const sanitized = contents.replace(/\uFEFF/g, '').trim();
@@ -67,17 +114,22 @@ interface VocabularyUploadProps {
 
 export default function VocabularyUpload({ onUpload }: VocabularyUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [statusType, setStatusType] = useState<'idle' | 'success' | 'error'>('idle');
+  const [state, dispatch] = useReducer(uploadReducer, initialState);
+
+  const isProcessing = state.status === 'processing';
+  const statusMessage = state.message;
+  const showStatus = state.status === 'success' || state.status === 'error';
+  const statusType: 'idle' | 'success' | 'error' = showStatus
+    ? state.status === 'success'
+      ? 'success'
+      : 'error'
+    : 'idle';
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsProcessing(true);
-    setStatusType('idle');
-    setStatusMessage(null);
+    dispatch({ type: 'START', fileName: file.name });
 
     try {
       const text = await file.text();
@@ -87,17 +139,15 @@ export default function VocabularyUpload({ onUpload }: VocabularyUploadProps) {
       }
 
       await onUpload(entries);
-      const successMessage = `Imported ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} from "${file.name}".`;
-      setStatusType('success');
-      setStatusMessage(successMessage);
-      toast.success('Upload complete', { description: successMessage });
+      dispatch({ type: 'SUCCESS', fileName: file.name, count: entries.length });
+      toast.success('Upload complete', {
+        description: `Imported ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} from "${file.name}".`,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to process the uploaded file.';
-      setStatusType('error');
-      setStatusMessage(message);
+      dispatch({ type: 'ERROR', fileName: file.name, message });
       toast.error('Upload failed', { description: message });
     } finally {
-      setIsProcessing(false);
       if (inputRef.current) {
         inputRef.current.value = '';
       }

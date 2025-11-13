@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { Loader2, ArrowRight, Volume2 } from 'lucide-react';
 import { useVocabulary } from '@/hooks/useVocabulary';
 import { speakText } from '@/lib/tts';
-import { VocabularyEntry } from '@/lib/db';
+import { VocabularyEntry, VocabularyEntryMutation } from '@/lib/db';
 import VocabularyForm from '@/components/VocabularyForm';
 import VocabularyUpload from '@/components/VocabularyUpload';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card';
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const { entries, loading, error, add } = useVocabulary();
+  const { entries, loading, error, add, addMany } = useVocabulary();
   const [isAdding, setIsAdding] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -22,7 +22,7 @@ export default function Home() {
     return entries[randomIndex];
   }, [entries.length]);
 
-  const handleAddEntry = async (entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleAddEntry = async (entry: VocabularyEntryMutation<'create'>) => {
     setIsAdding(true);
     try {
       await add(entry);
@@ -31,12 +31,10 @@ export default function Home() {
     }
   };
 
-  const handleUploadEntries = async (batch: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>[]) => {
+  const handleUploadEntries = async (batch: VocabularyEntryMutation<'create'>[]) => {
     setIsUploading(true);
     try {
-      for (const entry of batch) {
-        await add(entry);
-      }
+      await addMany(batch);
     } finally {
       setIsUploading(false);
     }

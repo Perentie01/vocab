@@ -3,10 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Plus } from 'lucide-react';
-import { VocabularyEntry } from '@/lib/db';
+import { VocabularyEntryMutation } from '@/lib/db';
 
 interface VocabularyFormProps {
-  onSubmit: (entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  onSubmit: (entry: VocabularyEntryMutation<'create'>) => Promise<void>;
   isLoading?: boolean;
 }
 

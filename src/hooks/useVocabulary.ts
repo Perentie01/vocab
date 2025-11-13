@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { VocabularyEntry, addEntry, updateEntry, deleteEntry, getAllEntries, searchEntries, initDB } from '@/lib/db';
+import {
+  VocabularyEntry,
+  VocabularyEntryMutation,
+  addEntry,
+  addEntries,
+  updateEntry,
+  deleteEntry,
+  getAllEntries,
+  searchEntries,
+  initDB,
+} from '@/lib/db';
 
 export function useVocabulary() {
   const [entries, setEntries] = useState<VocabularyEntry[]>([]);
@@ -25,7 +35,7 @@ export function useVocabulary() {
   }, []);
 
   const add = useCallback(
-    async (entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+    async (entry: VocabularyEntryMutation<'create'>) => {
       try {
         const newEntry = await addEntry(entry);
         setEntries(prev => [newEntry, ...prev]);
@@ -40,7 +50,7 @@ export function useVocabulary() {
   );
 
   const update = useCallback(
-    async (id: string, updates: Partial<Omit<VocabularyEntry, 'id' | 'createdAt'>>) => {
+    async (id: string, updates: VocabularyEntryMutation<'update'>) => {
       try {
         const updated = await updateEntry(id, updates);
         setEntries(prev =>
@@ -49,6 +59,23 @@ export function useVocabulary() {
         return updated;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to update entry';
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
+  const addMany = useCallback(
+    async (batch: VocabularyEntryMutation<'create'>[]) => {
+      if (!batch.length) return [];
+
+      try {
+        const created = await addEntries(batch);
+        setEntries(prev => [...created, ...prev]);
+        return created;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to add entries';
         setError(message);
         throw err;
       }
@@ -118,6 +145,7 @@ export function useVocabulary() {
     loading,
     error,
     add,
+    addMany,
     update,
     remove,
     deleteEntry: deleteEntry_,

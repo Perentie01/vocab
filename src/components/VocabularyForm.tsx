@@ -12,10 +12,12 @@ interface VocabularyFormProps {
 
 export default function VocabularyForm({ onSubmit, isLoading = false }: VocabularyFormProps) {
   const [english, setEnglish] = useState('');
+  const [pinyin, setPinyin] = useState('');
   const [chinese, setChinese] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const englishInputRef = useRef<HTMLInputElement>(null);
+  const pinyinInputRef = useRef<HTMLInputElement>(null);
   const chineseInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus English input on mount
@@ -41,11 +43,15 @@ export default function VocabularyForm({ onSubmit, isLoading = false }: Vocabula
     }
 
     try {
+      const trimmedPinyin = pinyin.trim();
+
       await onSubmit({
         english: english.trim(),
         chinese: chinese.trim(),
+        ...(trimmedPinyin ? { pinyin: trimmedPinyin } : {}),
       });
       setEnglish('');
+      setPinyin('');
       setChinese('');
       setSuccess(true);
       // Auto-focus back to English for next entry
@@ -57,18 +63,29 @@ export default function VocabularyForm({ onSubmit, isLoading = false }: Vocabula
 
   // Handle keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Tab from English to Chinese
-    if (e.key === 'Tab' && e.currentTarget === englishInputRef.current && !e.shiftKey) {
-      e.preventDefault();
-      chineseInputRef.current?.focus();
+    const target = e.currentTarget;
+
+    if (e.key === 'Tab' && !e.shiftKey) {
+      if (target === englishInputRef.current) {
+        e.preventDefault();
+        pinyinInputRef.current?.focus();
+      } else if (target === pinyinInputRef.current) {
+        e.preventDefault();
+        chineseInputRef.current?.focus();
+      }
     }
-    // Shift+Tab from Chinese to English
-    if (e.key === 'Tab' && e.currentTarget === chineseInputRef.current && e.shiftKey) {
-      e.preventDefault();
-      englishInputRef.current?.focus();
+
+    if (e.key === 'Tab' && e.shiftKey) {
+      if (target === chineseInputRef.current) {
+        e.preventDefault();
+        pinyinInputRef.current?.focus();
+      } else if (target === pinyinInputRef.current) {
+        e.preventDefault();
+        englishInputRef.current?.focus();
+      }
     }
-    // Enter from Chinese to submit
-    if (e.key === 'Enter' && e.currentTarget === chineseInputRef.current && !e.shiftKey) {
+
+    if (e.key === 'Enter' && target === chineseInputRef.current && !e.shiftKey) {
       e.preventDefault();
       if (english.trim() && chinese.trim()) {
         handleSubmit(e as any);
@@ -86,6 +103,18 @@ export default function VocabularyForm({ onSubmit, isLoading = false }: Vocabula
             placeholder="English"
             value={english}
             onChange={(e) => setEnglish(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            className="text-base"
+            autoComplete="off"
+          />
+
+          <Input
+            ref={pinyinInputRef}
+            id="pinyin"
+            placeholder="Pinyin (optional)"
+            value={pinyin}
+            onChange={(e) => setPinyin(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
             className="text-base"
@@ -119,7 +148,11 @@ export default function VocabularyForm({ onSubmit, isLoading = false }: Vocabula
           <Button
             type="submit"
             className="w-full"
-            disabled={isLoading || !english.trim() || !chinese.trim()}
+            disabled={
+              isLoading ||
+              !english.trim() ||
+              !chinese.trim()
+            }
             style={{
               backgroundColor: 'oklch(0.55 0.2 25)',
             }}

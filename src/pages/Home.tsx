@@ -4,14 +4,15 @@ import { Loader2, ArrowRight, Volume2, Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useVocabulary } from '@/hooks/useVocabulary';
 import { speakText } from '@/lib/tts';
-import { VocabularyEntry } from '@/lib/db';
+import { VocabularyEntry, VocabularyEntryMutation } from '@/lib/db';
 import VocabularyForm from '@/components/VocabularyForm';
+import VocabularyUpload from '@/components/VocabularyUpload';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const { entries, loading, error, add } = useVocabulary();
+  const { entries, loading, error, add, addMany } = useVocabulary();
   const [isAdding, setIsAdding] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
@@ -29,6 +30,11 @@ export default function Home() {
     } finally {
       setIsAdding(false);
     }
+  };
+
+  const handleUpload = async (batch: VocabularyEntryMutation<'create'>[]) => {
+    if (!batch.length) return;
+    await addMany(batch);
   };
 
   if (loading) {
@@ -98,7 +104,10 @@ export default function Home() {
         )}
 
         {/* Add New Word Section */}
-        <VocabularyForm onSubmit={handleAddEntry} isLoading={isAdding} />
+        <div className="space-y-4">
+          <VocabularyForm onSubmit={handleAddEntry} isLoading={isAdding} />
+          <VocabularyUpload onUpload={handleUpload} />
+        </div>
 
         {/* Stats and Navigation */}
         <div className="grid grid-cols-2 gap-4">

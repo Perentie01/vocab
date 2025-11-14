@@ -1,8 +1,9 @@
-import { useReducer, useRef } from 'react';
+import { useReducer, useRef, useState } from 'react';
 import { Upload, FileText } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { VocabularyEntryMutation } from '@/lib/db';
 import { toast } from 'sonner';
 
@@ -115,6 +116,7 @@ interface VocabularyUploadProps {
 export default function VocabularyUpload({ onUpload }: VocabularyUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [state, dispatch] = useReducer(uploadReducer, initialState);
+  const [tsvText, setTsvText] = useState('');
 
   const isProcessing = state.status === 'processing';
   const statusMessage = state.message;
@@ -154,6 +156,38 @@ export default function VocabularyUpload({ onUpload }: VocabularyUploadProps) {
     }
   };
 
+  const handleTextSubmit = async () => {
+    const trimmed = tsvText.trim();
+    const sourceName = 'Pasted TSV';
+
+    if (!trimmed) {
+      toast.error('Upload failed', {
+        description: 'Please paste TSV data before importing.',
+      });
+      return;
+    }
+
+    dispatch({ type: 'START', fileName: sourceName });
+
+    try {
+      const entries = parseTsvFile(trimmed);
+      if (!entries.length) {
+        throw new Error('No valid rows were found in the pasted text.');
+      }
+
+      await onUpload(entries);
+      dispatch({ type: 'SUCCESS', fileName: sourceName, count: entries.length });
+      toast.success('Upload complete', {
+        description: `Imported ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} from pasted text.`,
+      });
+      setTsvText('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to process the pasted data.';
+      dispatch({ type: 'ERROR', fileName: sourceName, message });
+      toast.error('Upload failed', { description: message });
+    }
+  };
+
   return (
     <Card className="p-6 elevation-1 border-dashed border-2 border-orange-100 bg-orange-50/40">
       <div className="flex flex-col gap-4">
@@ -188,6 +222,31 @@ export default function VocabularyUpload({ onUpload }: VocabularyUploadProps) {
             <FileText className="w-4 h-4" />
             Choose TSV file
           </Button>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Or paste TSV data</p>
+            <p className="text-xs text-gray-600">Paste rows directly below and import without uploading a file.</p>
+          </div>
+          <Textarea
+            value={tsvText}
+            onChange={event => setTsvText(event.target.value)}
+            placeholder={`chinese\tpinyin\tenglish\ttags\n你好\tnǐ hǎo\thello\tgreeting`}
+            rows={6}
+            disabled={isProcessing}
+            className="font-mono"
+          />
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={handleTextSubmit}
+              disabled={isProcessing}
+              className="w-full sm:w-auto"
+            >
+              Import pasted TSV
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-md bg-white/80 p-3 text-xs text-gray-600">

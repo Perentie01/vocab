@@ -1,6 +1,7 @@
+import Dexie, { Table } from 'dexie';
+
 /**
- * IndexedDB storage layer for vocabulary entries
- * Implements proper connection management to prevent "database connection is closing" errors
+ * IndexedDB storage layer for vocabulary entries powered by a Dexie-style API.
  */
 
 type Timestamped<T> = T & {
@@ -31,7 +32,21 @@ const DB_NAME = 'VocabDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'vocabulary';
 
-let dbPromise: Promise<IDBDatabase> | null = null;
+class VocabularyDatabase extends Dexie {
+  vocabulary!: Table<VocabularyEntry, string>;
+
+  constructor() {
+    super(DB_NAME);
+
+    this.version(DB_VERSION).stores({
+      [STORE_NAME]: '&id, english, chinese, pinyin, tags, createdAt, updatedAt',
+    });
+
+    this.vocabulary = this.table<VocabularyEntry, string>(STORE_NAME);
+  }
+}
+
+const db = new VocabularyDatabase();
 
 function generateEntryId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -55,85 +70,13 @@ function createEntryRecord(
   } satisfies VocabularyEntry;
 }
 
-function openDB(): Promise<IDBDatabase> {
-  if (dbPromise) {
-    return dbPromise;
-  }
-
-  dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => {
-      dbPromise = null; // Reset promise on error
-      reject(new Error('Failed to open IndexedDB'));
-    };
-
-    request.onsuccess = () => {
-      const database = request.result;
-      
-      // Reset connection on close to allow reconnection
-      database.onclose = () => {
-        dbPromise = null;
-      };
-      
-      resolve(database);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const database = (event.target as IDBOpenDBRequest).result;
-      
-      if (!database.objectStoreNames.contains(STORE_NAME)) {
-        const store = database.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        store.createIndex('language', 'language', { unique: false });
-        store.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-    };
-  });
-
-  return dbPromise;
-}
-
 export async function initDB(): Promise<void> {
-  await openDB();
-}
-
-function executeTransaction<T>(
-  callback: (store: IDBObjectStore) => IDBRequest<T>,
-  mode: 'readonly' | 'readwrite' = 'readonly'
-): Promise<T> {
-  return openDB().then((db) => {
-    return new Promise((resolve, reject) => {
-      try {
-        const transaction = db.transaction([STORE_NAME], mode);
-        const store = transaction.objectStore(STORE_NAME);
-        const request = callback(store);
-
-        request.onerror = () => {
-          reject(new Error('Transaction failed'));
-        };
-
-        request.onsuccess = () => {
-          resolve(request.result);
-        };
-
-        transaction.onerror = () => {
-          reject(new Error('Transaction error'));
-        };
-      } catch (error) {
-        reject(error);
-      }
-    });
-  });
+  await db.open();
 }
 
 export async function addEntry(entry: VocabularyEntryDraft): Promise<VocabularyEntry> {
   const newEntry = createEntryRecord(entry);
-
-  await executeTransaction(
-    (store) => store.add(newEntry),
-    'readwrite'
-  );
-
+  await db.vocabulary.add(newEntry);
   return newEntry;
 }
 
@@ -142,21 +85,9 @@ export async function addEntries(entries: VocabularyEntryDraft[]): Promise<Vocab
     return [];
   }
 
-  const database = await openDB();
-  const prepared = entries.map((entry, index) =>
-    createEntryRecord(entry, Date.now() + index)
-  );
-
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-
-    prepared.forEach(entry => store.add(entry));
-
-    transaction.oncomplete = () => resolve(prepared);
-    transaction.onerror = () => reject(new Error('Bulk insert transaction failed'));
-    transaction.onabort = () => reject(new Error('Bulk insert transaction aborted'));
-  });
+  const prepared = entries.map((entry, index) => createEntryRecord(entry, Date.now() + index));
+  await db.vocabulary.bulkAdd(prepared);
+  return prepared;
 }
 
 export async function updateEntry(
@@ -175,47 +106,37 @@ export async function updateEntry(
     updatedAt: Date.now(),
   };
 
-  await executeTransaction(
-    (store) => store.put(updatedEntry),
-    'readwrite'
-  );
-
+  await db.vocabulary.put(updatedEntry);
   return updatedEntry;
 }
 
 export async function deleteEntry(id: string): Promise<void> {
-  await executeTransaction(
-    (store) => store.delete(id),
-    'readwrite'
-  );
+  await db.vocabulary.delete(id);
 }
 
 export async function getEntry(id: string): Promise<VocabularyEntry | null> {
-  const result = await executeTransaction((store) => store.get(id));
-  return result || null;
+  const result = await db.vocabulary.get(id);
+  return result ?? null;
 }
 
 export async function getAllEntries(): Promise<VocabularyEntry[]> {
-  const results = await executeTransaction((store) => store.getAll());
-  const entries = (results as VocabularyEntry[]) || [];
+  const entries = await db.vocabulary.toArray();
   return entries.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function getEntriesByLanguage(language: 'en' | 'zh'): Promise<VocabularyEntry[]> {
-  const results = await executeTransaction((store) => {
-    const index = store.index('language');
-    return index.getAll(language);
-  });
-  const entries = (results as VocabularyEntry[]) || [];
-  return entries.sort((a, b) => b.createdAt - a.createdAt);
+  const entries = await db.vocabulary.toArray();
+  return entries
+    .filter(entry => (language === 'en' ? Boolean(entry.english) : Boolean(entry.chinese)))
+    .sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function searchEntries(query: string): Promise<VocabularyEntry[]> {
-  const allEntries = await getAllEntries();
+  const allEntries = await db.vocabulary.toArray();
   const lowerQuery = query.toLowerCase();
 
   return allEntries.filter(
-    (entry) =>
+    entry =>
       entry.english.toLowerCase().includes(lowerQuery) ||
       entry.chinese.toLowerCase().includes(lowerQuery)
   );

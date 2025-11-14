@@ -17,7 +17,8 @@
     "types": ["node", "vite/client"],
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["./shared/*"]
+      "@shared/*": ["./shared/*"],
+      "dexie": ["./src/vendor/dexie.ts"]
     }
   }
 }

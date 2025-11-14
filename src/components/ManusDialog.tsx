@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import voxLogo from "@/assets/logo";
 import { Button } from "@/components/ui/button";
 // Auth not needed for this app
 import {
@@ -21,7 +22,7 @@ interface ManusDialogProps {
 
 export function ManusDialog({
   title = "Vox",
-  logo = "/logo.png",
+  logo = voxLogo,
   open = false,
   onLogin,
   onOpenChange,

@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Vocabulary from "./pages/Vocabulary";
+import SpacedRepetition from "./pages/SpacedRepetition";
 import { useServiceWorker } from "./hooks/useServiceWorker";
 
 const basePath = (() => {
@@ -19,6 +20,7 @@ function AppRoutes() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/vocabulary" component={Vocabulary} />
+      <Route path="/spaced-repetition" component={SpacedRepetition} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route path="/:rest*" component={NotFound} />

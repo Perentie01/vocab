@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { Loader2, ArrowRight, Volume2, Moon, Sun } from 'lucide-react';
+import { Loader2, Volume2, Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useVocabulary } from '@/hooks/useVocabulary';
 import { speakText } from '@/lib/tts';
@@ -9,6 +9,7 @@ import VocabularyForm from '@/components/VocabularyForm';
 import VocabularyUpload from '@/components/VocabularyUpload';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import voxLogo from '@/assets/logo';
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -55,7 +56,7 @@ export default function Home() {
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="Vox" className="w-12 h-12" />
+              <img src={voxLogo} alt="Vox" className="w-12 h-12" />
               <h1 className="text-3xl font-bold" style={{ color: 'oklch(0.55 0.2 25)' }}>Vox</h1>
             </div>
             <button
@@ -83,21 +84,21 @@ export default function Home() {
 
         {/* Word of the Day Banner */}
         {wordOfTheDay && (
-          <Card className="p-6 elevation-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white overflow-hidden relative">
+          <Card className="p-5 elevation-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="relative z-10">
               <p className="text-sm font-semibold opacity-90 mb-2">Word of the Day</p>
-              <h2 className="text-3xl font-bold mb-2">{wordOfTheDay.english}</h2>
-              <p className="text-lg opacity-90 mb-4">{wordOfTheDay.chinese}</p>
+              <h2 className="text-2xl font-semibold mb-1">{wordOfTheDay.english}</h2>
+              <p className="text-lg font-semibold opacity-90 mb-2">{wordOfTheDay.chinese}</p>
               {wordOfTheDay.pinyin && (
-                <p className="text-sm opacity-75 mb-4">{wordOfTheDay.pinyin}</p>
+                <p className="text-sm opacity-80 mb-4">{wordOfTheDay.pinyin}</p>
               )}
               <Button
-                onClick={() => speakText(wordOfTheDay.english, 'en')}
+                onClick={() => speakText(wordOfTheDay.chinese)}
                 className="bg-white text-orange-600 hover:bg-orange-50 elevation-2"
               >
                 <Volume2 className="w-4 h-4 mr-2" />
-                Hear Pronunciation
+                听中文发音
               </Button>
             </div>
           </Card>
@@ -110,7 +111,7 @@ export default function Home() {
         </div>
 
         {/* Stats and Navigation */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="p-6 elevation-2 text-center hover:elevation-3 transition-all dark:bg-slate-800 dark:border-slate-700">
             <p className="text-3xl font-bold text-orange-600">{entries.length}</p>
           </Card>
@@ -119,6 +120,15 @@ export default function Home() {
             onClick={() => setLocation('/vocabulary')}
           >
             <p className="text-3xl font-bold text-teal-600">→</p>
+          </Card>
+          <Card
+            className="p-6 elevation-2 text-center hover:elevation-3 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700"
+            onClick={() => setLocation('/spaced-repetition')}
+          >
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Practice</p>
+              <p className="text-xl font-semibold text-orange-600">Spaced Repetition</p>
+            </div>
           </Card>
         </div>
 

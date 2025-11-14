@@ -40,8 +40,8 @@ export default function Vocabulary() {
     });
   };
 
-  const handleSpeak = (text: string, lang: "en" | "zh") => {
-    speakText(text, lang);
+  const handleSpeak = (text: string) => {
+    speakText(text);
   };
 
   return (
@@ -103,19 +103,9 @@ export default function Vocabulary() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                        {entry.english}
-                      </h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSpeak(entry.english, "en")}
-                        className="hover:bg-orange-100 dark:hover:bg-slate-700"
-                      >
-                        <Volume2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                      {entry.english}
+                    </h3>
                     <div className="space-y-1">
                       <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
                         {entry.chinese}
@@ -141,7 +131,7 @@ export default function Vocabulary() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleSpeak(entry.chinese, "zh")}
+                      onClick={() => handleSpeak(entry.chinese)}
                       className="hover:bg-orange-100 dark:hover:bg-slate-700"
                     >
                       <Volume2 className="w-4 h-4" />

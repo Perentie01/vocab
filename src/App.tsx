@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Vocabulary from "./pages/Vocabulary";
 import SpacedRepetition from "./pages/SpacedRepetition";
+import Profile from "./pages/Profile";
 import { useServiceWorker } from "./hooks/useServiceWorker";
 
 const basePath = (() => {
@@ -20,7 +21,9 @@ function AppRoutes() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/vocabulary" component={Vocabulary} />
+      <Route path="/review" component={SpacedRepetition} />
       <Route path="/spaced-repetition" component={SpacedRepetition} />
+      <Route path="/profile" component={Profile} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route path="/:rest*" component={NotFound} />
